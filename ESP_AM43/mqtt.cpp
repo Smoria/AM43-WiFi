@@ -36,7 +36,8 @@ m_lastMsg(0),
 m_lastReconnectAttempt(0),
 m_posLast(0),
 m_batLast(0),
-m_lightLast(0)
+m_lightLast(0),
+m_retain_recv(false)
 {
   // Set fingerprint if WiFiClientSecure is used
   //m_espClient.setFingerprint(s_fingerprint);
@@ -103,6 +104,7 @@ bool MqttClass::Reconnect()
 {
   if(m_client.connect(m_name, m_user, m_pass))
   {
+    m_retain_recv = false;
     m_client.subscribe(m_topic_cmd_cmd);
     m_client.subscribe(m_topic_pos_cmd);
   }
@@ -133,7 +135,14 @@ void MqttClass::Callback(char* topic, byte* payload, unsigned int length)
   }
   else if(strcmp(topic, m_topic_pos_cmd) == 0)
   {
-    AM43.SetPosition(atoi((const char*)payload));
+    if(m_retain_recv)
+    {
+      AM43.SetPosition(atoi((const char*)payload));
+    }
+    else
+    {
+      m_retain_recv = true;
+    }
   }
 }
 

@@ -5,10 +5,10 @@
 #include <WebSocketsServer.h>   //https://github.com/Links2004/arduinoWebSockets/tree/async
 #include <Hash.h>
 WebSocketsServer webSocket = WebSocketsServer(81);
+String log_txt;
 #endif
 
 AM43Class AM43;
-
 namespace {
 static uint8_t s_reqPrefix[] = { 0x00, 0xFF, 0x00, 0x00 };
 static uint8_t s_reqHeaderPrefix[] = { 0x9a };
@@ -37,6 +37,10 @@ void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t lenght
       {
         AM43.Update();
       }
+      else if(payload[0] == 'L')
+      {
+        webSocket.broadcastTXT(log_txt + "\n");
+      }
       else
       {
         uint8_t pos = txt.toInt();
@@ -52,7 +56,7 @@ m_stream(nullptr),
 m_update_step(UpdateStep::Start),
 m_update_delay(AM43_UPDATE_DELAY_FAST_MS),
 m_last_update(0),
-m_last_answer(0),
+m_no_answer_reset_counter(0),
 m_update_ticks(0),
 m_direction(Direction::Forward),
 m_operationMode(OperationMode::Inching),
@@ -180,16 +184,10 @@ void AM43Class::Loop()
   }
 
   if(millis() - m_last_update >= m_update_delay)
-  {
+  {    
     Update();
+    
     m_last_update = millis();
-  }
-
-  // Reset device if there is no answer for some time
-  if(millis() - m_last_answer >= AM43_NO_ANSWER_RESET_MS)
-  {
-    DeviceReset();
-    m_last_answer = millis();
   }
 
   #ifdef WEB_SOCKET_DEBUG
@@ -198,7 +196,7 @@ void AM43Class::Loop()
 }
 
 void AM43Class::DeviceReset()
-{
+{  
   // Switch pin mode to output and pull it low
   digitalWrite(AM43_PIN_RESET, LOW);
   pinMode(AM43_PIN_RESET, OUTPUT);
@@ -212,6 +210,20 @@ void AM43Class::DeviceReset()
 
 void AM43Class::Update()
 {
+  #ifdef WEB_SOCKET_DEBUG
+  if(log_txt.length() > 2000)
+  {
+    log_txt = "";
+  }
+  #endif
+  
+  ++m_no_answer_reset_counter;
+  if(m_no_answer_reset_counter > AM43_NO_ANSWER_RESET_T)
+  {
+    DeviceReset();
+    m_no_answer_reset_counter = 0;
+  }
+  
   if(++m_update_ticks > 10 || m_update_step == UpdateStep::Start)
   {
       m_update_delay = AM43_UPDATE_DELAY_FAST_MS;
@@ -264,11 +276,17 @@ void AM43Class::SendAction(ControlAction action)
     case ControlAction::Close:
     {
       ++m_position;
+      #ifdef WEB_SOCKET_DEBUG
+      log_txt += " +:" + String(m_position);
+      #endif
       break;
     }
     case ControlAction::Open:
     {
       --m_position;
+      #ifdef WEB_SOCKET_DEBUG
+      log_txt += " -:" + String(m_position);
+      #endif
       break;
     }
   }
@@ -279,6 +297,9 @@ void AM43Class::SendAction(ControlAction action)
 void AM43Class::SetPosition(uint8_t position_percent)
 {
   m_position = constrain(position_percent, 0, 100);
+  #ifdef WEB_SOCKET_DEBUG
+  log_txt += " =:" + String(m_position);
+  #endif
   
   const int len = BuildRequest(m_aux_buff, sizeof(m_aux_buff), Command::SetPosition, m_position);
   SendRequest(m_aux_buff, len);
@@ -366,7 +387,7 @@ int AM43Class::HandleResponse(const uint8_t* buff, unsigned int buff_n)
     return 0;
   }
 
-  m_last_answer = millis();
+  m_no_answer_reset_counter = 0;
   
   int response_offset = response_begin + sizeof(s_reqHeaderPrefix);
 
@@ -406,6 +427,9 @@ int AM43Class::HandleResponse(const uint8_t* buff, unsigned int buff_n)
           m_deviceDiameter = data[5];
           
           m_deviceType = static_cast<DeviceType>(abs(data[6] >> 4));
+          #ifdef WEB_SOCKET_DEBUG
+          log_txt += " *:" + String(m_position);
+          #endif
         }
         break;
       }
@@ -428,6 +452,9 @@ int AM43Class::HandleResponse(const uint8_t* buff, unsigned int buff_n)
         if(response_len >= 2)
         {
           m_position = data[1];
+          #ifdef WEB_SOCKET_DEBUG
+          log_txt += " /:" + String(m_position);
+          #endif
         }
         break;
       }

@@ -41,6 +41,7 @@ class MqttClass
     char m_topic_pos_status[48];
     char m_topic_json[48];
 
+    bool m_retain_recv;
     // Last AM43 status
     uint8_t m_posLast;
     uint8_t m_batLast;

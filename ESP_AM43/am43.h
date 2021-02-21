@@ -6,7 +6,7 @@
 #define AM43_BAUD                 19200
 #define AM43_UPDATE_DELAY_FAST_MS 1000
 #define AM43_UPDATE_DELAY_SLOW_MS 15000
-#define AM43_NO_ANSWER_RESET_MS   360000
+#define AM43_NO_ANSWER_RESET_T    32
 
 #define AM43_PIN_RESET            5
 
@@ -183,7 +183,7 @@ protected:
   UpdateStep m_update_step;
   unsigned long m_last_update;
   unsigned long m_update_delay;
-  unsigned long m_last_answer;
+  int m_no_answer_reset_counter;
   int m_update_ticks;
   
   Direction m_direction;
