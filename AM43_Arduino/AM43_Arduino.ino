@@ -23,8 +23,7 @@ const char* config_filename = "/config.json";
 
 // !!!!!!!!!!!!!!!!!!!!!!! CHANGE THIS PASSWORD !!!!!!!!!!!!!!!!!!!!!!!
 // !!!!!!!!!!!!!!!!!!!!!!! CHANGE THIS PASSWORD !!!!!!!!!!!!!!!!!!!!!!!
-// !!!!!!!!!!!!!!!!!!!!!!! CHANGE THIS PASSWORD !!!!!!!!!!!!!!!!!!!!!!!
-const char* passwd = "change_your_pass";
+const char* passwd = " bigjigglypanda";
 const char* esp_ssid_fmt = "ESP-AM43-%s";
 char esp_ssid[40] = {0};
 
