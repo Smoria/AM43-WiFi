@@ -1,6 +1,10 @@
 # AM43-WiFi
 This project changes chinese AM43 blinds engine (like on image below) controls from BLE to WiFi MQTT using ESP8266 modules such as ESP-01 or ESP-12F
 
+**Now with ESPHome version available**
+
+*This is not same as AM43 cover component which is just WiFi<->BLE bridge, this is hardware conversion with removal of BLE module*
+
 ![AM43 device](images/am43.jpeg)
 
 **This is hardware modification!**
@@ -9,10 +13,10 @@ Only problem I have noticed after modification that AM43 MCU hangs after couple 
 
 # You need
 * Some adequate soldering and most important **desoldering** skills
-* Knowledge of ESP8266 flashing mechanism using Arduino IDE
+* Knowledge of ESP8266 flashing mechanism using Arduino IDE (or ESPHome flasher in case of ESPHome version)
 * ESP8266 module. I've used ESP-12F. You can use ESP-01 or others but there is some changes must be made to board pinout in code.
 
-# Features
+# Features (Arduino MQTT version)
 - Control over WiFi using MQTT client
 - OTA updates enabled
 - WiFi Manager with WiFi and MQTT Settings
@@ -23,8 +27,16 @@ Only problem I have noticed after modification that AM43 MCU hangs after couple 
 - Light level tracking
 - Automatically resets blinds MCU if there is no response for some time (5 minutes)
 
+# Features (ESPHome version)
+- Control over component trough ESPHome configuration
+- Accepts position input (0%-100%)
+- Position tracking
+- Battery level tracking
+- Light level tracking
+- Automatically resets blinds MCU if there is no response for some time (5 minutes)
+
 # Installation
-### Firmware
+### Firmware (Arduino MQTT version)
 1. Prepare ESP8266 board to use:
    1. For ESP-12F there is two 1k resistors needed between *EN* and *VCC* pins and between *GPIO15* and *GND*.
    2. Also for some modules to upload firmware over UART *GPIO0* must be connected to *GND*.
@@ -36,6 +48,8 @@ Only problem I have noticed after modification that AM43 MCU hangs after couple 
 4. Connect to new WiFi access point named "ESP-AM43-(esp-mac-address)" using changed password from "passwd" constant.
 5. Change WiFi and MQTT settings.
 6. Firmware part is done.
+### Firmware (ESPHome version)
+Follow default ESPHome instalation procedure using provided config file.
 ### Hardware
 1. Disassemble device
 ![Mainboard with BLE module](images/ble.jpg)
